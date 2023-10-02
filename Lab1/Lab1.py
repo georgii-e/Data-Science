@@ -16,10 +16,10 @@ headers = {"User-Agent": user_agent}
 
 
 def stat_characteristics(lst):
-    '''
+    """
     :param lst: sample for which characteristics are calculated
     :return: mean, median, variance, and root-mean-square deviation of the sample
-    '''
+    """
     mean = np.mean(lst)
     median = np.median(lst)
     variance = np.var(lst)
@@ -27,27 +27,31 @@ def stat_characteristics(lst):
     return mean, median, variance, RMSD
 
 
-def print_characteristics(mean, median, variance, RMSD):
-    '''
+def print_characteristics(mean=None, median=None, variance=None, std_dev=None, lst=None):
+    """
+    :param lst: data
     :param mean: mean
     :param median: median
     :param variance: variance
-    :param RMSD: root-mean-square deviation
+    :param std_dev: standard deviation
     :return: void
-    '''
+    """
+    if isinstance(lst, np.ndarray):
+        mean, median, variance, std_dev = stat_characteristics(lst)
     print(f"Mean: {mean:.2f}")
     print(f"Median: {median:.2f}")
     print(f"Variance: {variance:.2f}")
-    print(f"Root mean square deviation: {RMSD:.2f}\n")
+    print(f"Standard Deviation: {std_dev:.2f}\n")
 
 
 def percentage_difference(old_value, new_value):
-    '''
+    """
     :param old_value: first number
     :param new_value: second number
     :return: percentage difference between two numbers
-    '''
+    """
     return ((new_value - old_value) / old_value) * 100
+
 
 # parsing the website
 response = requests.get(url, headers=headers)
@@ -69,9 +73,9 @@ columns = temperatures_html.find_all("th")
 column_list = [item.get_text(strip=True) for item in columns]
 rates = pd.DataFrame(btc_rate, columns=column_list)
 
-
 # data cleansing and transformation
 rates = rates.dropna()
+rates = rates[::-1]
 rates['Open'] = rates['Open'].str.replace(',', '').astype(float)
 rates['High'] = rates['High'].str.replace(',', '').astype(float)
 rates['Low'] = rates['Low'].str.replace(',', '').astype(float)
@@ -90,14 +94,14 @@ plt.show()
 
 # calculating statistical characteristics for the data
 print("Statistical characteristics for the dataset")
-mean_data, median_data, variance_data, RMSD_data = stat_characteristics(rates['Close*'])
-print_characteristics(mean_data, median_data, variance_data, RMSD_data)
+mean_data, median_data, variance_data, std_dev_data = stat_characteristics(rates['Close*'])
+print_characteristics(mean_data, median_data, variance_data, std_dev_data)
 
 # synthesis of a model similar to real data
 a = 12
 b = -850
 c = 30000
-x_values_synthetic = [x for x in range(len(rates))]
+x_values_synthetic = [x for x in range(len(rates) - 1, -1, -1)]
 y_values_synthetic = [a * x ** 2 + b * x + c for x in x_values_synthetic]
 
 # visualisation of quadratic model along with real data
@@ -113,12 +117,12 @@ plt.show()
 
 # calculating statistical characteristics for the synthetic model
 print("Statistical characteristics for the synthetic model")
-mean_synthetic, median_synthetic, variance_synthetic, RMSD_synthetic = stat_characteristics(y_values_synthetic)
-print_characteristics(mean_synthetic, median_synthetic, variance_synthetic, RMSD_synthetic)
+mean_synthetic, median_synthetic, variance_synthetic, std_dev_synthetic = stat_characteristics(y_values_synthetic)
+print_characteristics(mean_synthetic, median_synthetic, variance_synthetic, std_dev_synthetic)
 
 # calculating difference between statistical characteristics of real data and artificial model
 print("Difference between real data and synthetic model:")
 print(f"Mean: {percentage_difference(mean_data, mean_synthetic):.2f}%")
 print(f"Median: {percentage_difference(median_data, median_synthetic):.2f}%")
 print(f"Variance: {percentage_difference(variance_data, variance_synthetic):.2f}%")
-print(f"Root mean square deviation: {percentage_difference(RMSD_data, RMSD_synthetic):.2f}%")
+print(f"Standard Deviation: {percentage_difference(std_dev_data, std_dev_synthetic):.2f}%")
